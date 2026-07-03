@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ovae — for you</title>
+  <meta name="description" content="One companion for every stage of your body — cycle, fertility, pregnancy, menopause. Free for women, forever. Join the waitlist.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='54' r='34' fill='none' stroke='%23B5476E' stroke-width='16'/></svg>">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a href="/" aria-label="Ovae home"><img class="mark" src="wordmark.svg" alt="ovae"></a>
+    <nav>
+      <a href="partner.html">For partners</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <div class="hero" id="pitch">
+      <h1>One companion for every stage of <em>your body.</em></h1>
+      <p class="lede">Every morning, Ovae tells you what's actually happening — your cycle, fertility, pregnancy, menopause — in warm, plain language. Why you're exhausted on day two. Why you want to cry at a commercial this week. What actually helps. Free for you, forever.</p>
+      <div class="phases" aria-hidden="true">
+        <span style="background:#B5476E"></span>
+        <span style="background:#7FA8C9"></span>
+        <span style="background:#C9933A"></span>
+        <span style="background:#8F7BA8"></span>
+      </div>
+    </div>
+
+    <section id="what">
+      <h2>What every morning feels like</h2>
+      <div class="cards">
+        <div class="card"><h4>A daily note that gets you</h4><p>Phase-matched, plain language, a little funny. Like texting your smartest friend.</p></div>
+        <div class="card"><h4>Your whole body, every stage</h4><p>Cycle, fertility, pregnancy, menopause — one app that grows with you instead of five that don't talk to each other.</p></div>
+        <div class="card"><h4>Real talk, not clinical talk</h4><p>"Your hormones are at the floor — you're not lazy." Not a chart you have to decode.</p></div>
+        <div class="card"><h4>Yours, and private</h4><p>No ads. No trackers. No selling your data. One tap deletes everything — provably. <a href="privacy.html" style="color:var(--rose)">The promise</a></p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>The part nobody did for you</h2>
+      <h3>You shouldn't have to be alone in your own body.</h3>
+      <p>No one ever sat you down and explained what your body actually does across a month, a pregnancy, a decade. Ovae finally does — every day, in language that makes you feel known instead of managed.</p>
+    </section>
+
+    <section id="join">
+      <h2>Join the waitlist</h2>
+      <form class="wl" id="wl-me">
+        <label for="email">Your email</label>
+        <input id="email" name="email" type="email" required placeholder="you@example.com" autocomplete="email">
+        <label for="stage">Where are you right now?</label>
+        <select id="stage" name="stage" required>
+          <option value="" disabled selected>Choose one</option>
+          <option value="cycle">Tracking my cycle</option>
+          <option value="ttc">Trying to conceive</option>
+          <option value="pregnant">Pregnant</option>
+          <option value="postpartum">Postpartum</option>
+          <option value="menopause">Perimenopause / menopause</option>
+          <option value="curious">Just here for me</option>
+        </select>
+        <button type="submit">Join the waitlist</button>
+        <p class="err hidden">Something hiccuped. Email <a href="mailto:hello@ovae.health?subject=Waitlist">hello@ovae.health</a> and you're in.</p>
+        <label>Be first in. No spam — just updates as we build.</label>
+      </form>
+
+      <div class="confirm hidden" id="done-me">
+        <h3>You're in.</h3>
+        <p>One more thing — Ovae has a partner side. It quietly tells the person who loves you how to show up for you: a heads-up before a hard week, a nudge to send the right thing on the right day. Not because you asked. Because they finally know how.</p>
+        <a class="badge" id="share-btn" href="partner.html?via=me">Send it to your person</a>
+        <span class="note" id="share-note">Or <a href="partner.html?via=me" style="color:var(--rose)">see the partner side yourself</a>.</span>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© 2026 Ovae Health, Inc.</span>
+    <a href="/">Home</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="terms.html">Terms</a>
+    <a href="support.html">Support</a>
+  </div>
+</footer>
+
+<script src="waitlist.js"></script>
+<script>
+  wireWaitlistForm(
+    'wl-me',
+    (form) => ({
+      email: form.email.value.trim(),
+      audience: 'me',
+      stage: form.stage.value,
+      source: sourceTag(),
+    }),
+    () => {
+      document.getElementById('wl-me').classList.add('hidden');
+      document.querySelector('#join h2').textContent = 'Welcome';
+      document.getElementById('done-me').classList.remove('hidden');
+      document.getElementById('done-me').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    },
+  );
+
+  // The handoff: native share where available, otherwise the link just works.
+  document.getElementById('share-btn').addEventListener('click', (e) => {
+    const text = "found the app I've been wanting — it tells your person how to actually show up for you: https://ovae.health/partner.html?via=me";
+    if (navigator.share) {
+      e.preventDefault();
+      navigator.share({ text }).catch(() => {});
+    }
+  });
+</script>
+
+</body>
+</html>

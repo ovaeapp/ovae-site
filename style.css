@@ -86,3 +86,50 @@ main.doc table { margin-top: 16px; border-collapse: collapse; width: 100%; font-
 main.doc th, main.doc td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--hairline); color: var(--ink-soft); }
 main.doc th { color: var(--ink); font-weight: 600; }
 main.doc a { color: var(--rose); }
+
+/* Two doors */
+.doors { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 40px; }
+.door {
+  display: block; text-align: center; background: #fff;
+  border: 1.5px solid var(--hairline); border-radius: 18px;
+  padding: 30px 20px; text-decoration: none; color: var(--ink);
+  transition: border-color 0.15s;
+}
+.door:hover { border-color: var(--rose); }
+.door strong { font-size: 18px; font-weight: 600; }
+.door span { display: block; margin-top: 6px; font-size: 13px; color: var(--ink-soft); }
+@media (max-width: 560px) { .doors { grid-template-columns: 1fr; } }
+
+/* Waitlist form */
+form.wl { margin-top: 26px; display: grid; gap: 12px; max-width: 430px; }
+form.wl input, form.wl select {
+  padding: 13px 16px; border: 1.5px solid var(--hairline); border-radius: 12px;
+  font-size: 15px; background: #fff; color: var(--ink); font-family: inherit;
+  -webkit-appearance: none; appearance: none;
+}
+form.wl input:focus, form.wl select:focus { outline: 2px solid var(--rose); outline-offset: 1px; border-color: var(--rose); }
+form.wl button {
+  border: 0; cursor: pointer; background: var(--rose); color: #fff;
+  padding: 14px 26px; border-radius: 999px; font-size: 15px; font-weight: 600; font-family: inherit;
+}
+form.wl button:hover { background: #9d3a5e; }
+form.wl button:disabled { opacity: 0.6; cursor: default; }
+form.wl label { font-size: 13px; color: var(--ink-soft); }
+
+/* Partner tiers (intent, not checkout) */
+.tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 22px; max-width: 520px; }
+.tier {
+  border: 1.5px solid var(--hairline); border-radius: 14px; padding: 16px 12px;
+  background: #fff; cursor: pointer; text-align: center; transition: border-color 0.15s;
+}
+.tier.sel { border-color: var(--rose); box-shadow: 0 0 0 1px var(--rose); }
+.tier b { display: block; font-size: 15px; font-weight: 600; }
+.tier em { display: block; font-style: normal; color: var(--rose); font-size: 18px; margin-top: 4px; }
+.tier i { display: block; font-style: normal; color: var(--ink-soft); font-size: 12px; margin-top: 6px; line-height: 1.45; }
+@media (max-width: 560px) { .tiers { grid-template-columns: 1fr; } }
+
+.hidden { display: none; }
+.confirm { margin-top: 30px; }
+.confirm h3 { font-size: 26px; font-weight: 400; }
+.confirm p { margin-top: 12px; color: var(--ink-soft); max-width: 34em; }
+.err { color: #B23230; font-size: 14px; margin-top: 4px; }

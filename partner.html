@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ovae — the partner side</title>
+  <meta name="description" content="The partner side of Ovae: know where she is, how she's doing, and one concrete way to show up — plus in-app gifting that lands on the right day.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='54' r='34' fill='none' stroke='%23B5476E' stroke-width='16'/></svg>">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a href="/" aria-label="Ovae home"><img class="mark" src="wordmark.svg" alt="ovae"></a>
+    <nav>
+      <a href="for-me.html">For her</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <div class="hero">
+      <h1>Stop guessing. <em>Start showing up.</em></h1>
+      <p class="lede">The partner side of Ovae tells you where she is, how she's doing today, and one concrete way to be great — every day. A heads-up before a hard week. A nudge to send the right thing on the right day. Not mind-reading. Better.</p>
+    </div>
+
+    <section>
+      <h2>What you get</h2>
+      <div class="cards">
+        <div class="card"><h4>The daily tip</h4><p>One sentence a day on how to show up. "Heaviest day of her cycle — food she loves, zero questions."</p></div>
+        <div class="card"><h4>Send, in three taps</h4><p>Comfort delivered to her door — and the app tells you why today is the day.</p></div>
+        <div class="card"><h4>Her asks, your one-tap jobs</h4><p>When she needs something, it lands on your side with one button: send it now.</p></div>
+        <div class="card"><h4>Only what she shares</h4><p>You see her phase, her day, and how she says she's doing — never her private logs. She approves the connection; that's the point.</p></div>
+      </div>
+    </section>
+
+    <section id="join">
+      <h2>Pricing at launch</h2>
+      <h3>Pick the version of you she deserves.</h3>
+      <div class="tiers" id="tiers">
+        <label class="tier"><input type="radio" name="tier" value="aware" hidden>
+          <b>Aware</b><em>$6/mo</em><i>Where she is, every day, plus the daily tip.</i>
+        </label>
+        <label class="tier"><input type="radio" name="tier" value="devoted" hidden>
+          <b>Devoted</b><em>$12/mo</em><i>Everything in Aware, plus gifting and her one-tap requests.</i>
+        </label>
+        <label class="tier"><input type="radio" name="tier" value="husband" hidden>
+          <b>All of it</b><em>$18/mo</em><i>Everything, through pregnancy and postpartum too.</i>
+        </label>
+      </div>
+      <p style="font-size:13px;">Nothing is charged today — this is the launch list. Pick a tier if you already know, and you'll be first in when it opens.</p>
+
+      <form class="wl" id="wl-partner">
+        <label for="email">Your email</label>
+        <input id="email" name="email" type="email" required placeholder="you@example.com" autocomplete="email">
+        <button type="submit">Get it at launch</button>
+        <p class="err hidden">Something hiccuped. Email <a href="mailto:hello@ovae.health?subject=Partner%20waitlist">hello@ovae.health</a> and you're in.</p>
+        <label>No spam — one email when the partner side opens.</label>
+      </form>
+
+      <div class="confirm hidden" id="done-partner">
+        <h3>You're on the list.</h3>
+        <p>When the partner side opens, you'll be first through the door. Until then: whatever day it is for her today, showing up early counts double.</p>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© 2026 Ovae Health, Inc.</span>
+    <a href="/">Home</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="terms.html">Terms</a>
+    <a href="support.html">Support</a>
+  </div>
+</footer>
+
+<script src="waitlist.js"></script>
+<script>
+  let pickedTier = null;
+  document.querySelectorAll('.tier').forEach((el) => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.tier').forEach((t) => t.classList.remove('sel'));
+      el.classList.add('sel');
+      pickedTier = el.querySelector('input').value;
+    });
+  });
+
+  wireWaitlistForm(
+    'wl-partner',
+    (form) => ({
+      email: form.email.value.trim(),
+      audience: 'partner',
+      tier: pickedTier,
+      source: sourceTag(),
+    }),
+    () => {
+      document.getElementById('wl-partner').classList.add('hidden');
+      document.getElementById('done-partner').classList.remove('hidden');
+      document.getElementById('done-partner').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    },
+  );
+</script>
+
+</body>
+</html>
