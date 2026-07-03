@@ -2,7 +2,7 @@
 // No form service, no third-party scripts, nothing watching. The key below is
 // the public anon key; the table is write-only for it (nobody can read the
 // list without the service role).
-const WL_URL = 'https://wftnynwtesdtuuteugib.supabase.co/rest/v1/waitlist?on_conflict=email,audience';
+const WL_URL = 'https://wftnynwtesdtuuteugib.supabase.co/rest/v1/waitlist';
 const WL_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmdG55bnd0ZXNkdHV1dGV1Z2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMjI5NzMsImV4cCI6MjA5ODU5ODk3M30.-MJ2uuBJsyAvhHCpe2XWfAE7K6GhzXPkHCfFcEADZEM';
 
 async function joinWaitlist(payload) {
@@ -12,7 +12,6 @@ async function joinWaitlist(payload) {
       apikey: WL_KEY,
       Authorization: 'Bearer ' + WL_KEY,
       'Content-Type': 'application/json',
-      Prefer: 'resolution=ignore-duplicates',
     },
     body: JSON.stringify(payload),
   });
