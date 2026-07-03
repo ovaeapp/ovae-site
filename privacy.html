@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy — Ovae</title>
+  <meta name="description" content="Ovae's privacy policy, in plain English. No ads, no trackers, no data selling. Your health data is encrypted, separated from your identity, and deletable — provably.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='54' r='34' fill='none' stroke='%23B5476E' stroke-width='16'/></svg>">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a href="/" aria-label="Ovae home"><img class="mark" src="wordmark.svg" alt="ovae"></a>
+    <nav><a href="support.html">Support</a></nav>
+  </div>
+</header>
+
+<main class="doc">
+  <div class="wrap">
+    <h1>The privacy promise</h1>
+    <p class="updated">Last updated July 3, 2026 · Ovae Health, Inc. · hello@ovae.health</p>
+
+    <p>This is our privacy policy, written the way we write everything: plainly. A period-tracking app asks for some of the most sensitive data that exists. Here is exactly what we do with it — and more importantly, what we will never do.</p>
+
+    <h2>What we will never do</h2>
+    <ul>
+      <li><strong>We never sell your data.</strong> Not to advertisers, not to data brokers, not to anyone, not ever.</li>
+      <li><strong>We run no ads and no third-party trackers.</strong> There are no advertising or analytics SDKs in the app. No one is watching you use it.</li>
+      <li><strong>We never share your health data with law enforcement without a valid court order</strong> — and we've designed our systems so there is as little to hand over as possible (see &ldquo;How your data is stored,&rdquo; below).</li>
+      <li><strong>Your partner never sees your health details.</strong> If you choose to connect a partner, they see only: your first name, your cycle phase and day, a countdown, how you said you're feeling today, and a daily tip. Never your symptoms, notes, or history. The connection only exists if you approve it, and you can end it at any time.</li>
+    </ul>
+
+    <h2>What we collect, and why</h2>
+    <table>
+      <tr><th>Data</th><th>Why</th></tr>
+      <tr><td>What you log: cycle dates, symptoms, moods, life events</td><td>To show you your patterns, predictions, and daily message. This is the product.</td></tr>
+      <tr><td>Your email (only if you create an account)</td><td>To sign you in and restore your data on a new phone. Accounts are optional — the app works fully without one.</td></tr>
+      <tr><td>The first name you choose to display</td><td>Greetings, and (with your consent) what your partner sees.</td></tr>
+      <tr><td>Delivery details, if you order products</td><td>To deliver what you ordered. Payments are processed by Stripe; we never see your card number.</td></tr>
+    </table>
+    <p>That's the list. We don't collect your location, your contacts, your photos, or anything from other apps.</p>
+
+    <h2>How your data is stored</h2>
+    <ul>
+      <li><strong>On your phone:</strong> your data is encrypted at rest, with the key held in your device's secure keychain. You can add Face ID lock on top.</li>
+      <li><strong>On our servers (only if you create an account):</strong> your identity (email) and your health data live in separate systems. Health records are keyed to a random ID, not your name or email — so either half, alone, reveals close to nothing.</li>
+      <li><strong>Retention is enforced by code, not policy:</strong> operational logs are automatically purged on a fixed schedule (notification logs after 90 days, security logs after 400 days). Your health data is kept until you delete it — it's yours.</li>
+    </ul>
+
+    <h2>Deleting your data</h2>
+    <p>&ldquo;Erase everything&rdquo; in the app means everything: your account and every record attached to it are deleted from our live systems immediately, in one transaction, and age out of our infrastructure provider's rolling backups within 30 days. No export is retained, no &ldquo;deactivated&rdquo; limbo, no retention tricks. You can also export all of your data at any time, from the app, for free.</p>
+
+    <h2>Who else touches data</h2>
+    <p>We use a small number of infrastructure providers to run Ovae: Supabase (database hosting), Stripe (payment processing), Resend (transactional email, e.g. sign-in codes), and Apple (app distribution and push notifications). Each receives only the minimum needed to do its job. None of them may use your data for anything else.</p>
+
+    <h2>What Ovae is not</h2>
+    <p>Ovae is a companion and a tracker — <strong>not a medical device, and not medical advice.</strong> Predictions are estimates that we deliberately present with honesty about their uncertainty. Ovae must not be relied on as contraception or to diagnose any condition. Patterns the app flags are observations to discuss with a clinician, never diagnoses.</p>
+
+    <h2>Children</h2>
+    <p>Ovae is not directed at children under 13, and we don't knowingly collect data from them. If you believe a child has created an account, contact us and we'll delete it.</p>
+
+    <h2>Changes</h2>
+    <p>If we ever change this policy, we'll say so in the app before the change takes effect — in plain English, with the actual differences called out. The promises in &ldquo;What we will never do&rdquo; are not subject to weakening.</p>
+
+    <h2>Contact</h2>
+    <p>Questions, concerns, deletion requests: <a href="mailto:hello@ovae.health">hello@ovae.health</a>. A human reads it.</p>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© 2026 Ovae Health, Inc.</span>
+    <a href="/">Home</a>
+    <a href="terms.html">Terms</a>
+    <a href="support.html">Support</a>
+  </div>
+</footer>
+
+</body>
+</html>
