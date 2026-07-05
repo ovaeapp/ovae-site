@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Covered — Ovae</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='54' r='34' fill='none' stroke='%23B5476E' stroke-width='16'/></svg>">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a href="/" aria-label="Ovae home"><img class="mark" src="wordmark.svg" alt="ovae"></a>
+  </div>
+</header>
+
+<main class="doc">
+  <div class="wrap" id="card" style="max-width:440px;">
+    <p id="status" class="updated">Loading…</p>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© 2026 Ovae Health, Inc.</span>
+    <a href="privacy.html">Privacy</a>
+    <span>You'll only ever see the amount. Nothing else is shared with you.</span>
+  </div>
+</footer>
+
+<script>
+  const SB_URL = 'https://wftnynwtesdtuuteugib.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmdG55bnd0ZXNkdHV1dGV1Z2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMjI5NzMsImV4cCI6MjA5ODU5ODk3M30.-MJ2uuBJsyAvhHCpe2XWfAE7K6GhzXPkHCfFcEADZEM';
+
+  const card = document.getElementById('card');
+  const params = new URLSearchParams(location.search);
+
+  function money(cents) { return '$' + (cents / 100).toFixed(2); }
+
+  if (params.get('done') === '1') {
+    card.innerHTML =
+      '<h1 style="font-size:28px;font-weight:300;">Done — and thank you.</h1>' +
+      '<p style="margin-top:14px;color:var(--ink-soft);">It\'s handled. It\'s on its way to her. You showed up, and that\'s the whole thing.</p>';
+  } else {
+    const token = params.get('token');
+    if (!token) {
+      document.getElementById('status').textContent = 'This link is missing something. Ask for a fresh one.';
+    } else {
+      fetch(SB_URL + '/rest/v1/rpc/get_cover_request', {
+        method: 'POST',
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_token: token }),
+      })
+        .then((r) => r.json())
+        .then((rows) => {
+          const req = Array.isArray(rows) ? rows[0] : rows;
+          if (!req) {
+            card.innerHTML = '<h1 style="font-size:26px;font-weight:300;">This link has expired.</h1><p style="margin-top:14px;color:var(--ink-soft);">Cover links last 48 hours. Ask for a new one.</p>';
+            return;
+          }
+          if (req.status !== 'pending') {
+            card.innerHTML = '<h1 style="font-size:26px;font-weight:300;">Already taken care of.</h1><p style="margin-top:14px;color:var(--ink-soft);">Someone already covered this one. Nothing more to do.</p>';
+            return;
+          }
+          card.innerHTML =
+            '<h1 style="font-size:28px;font-weight:300;line-height:1.2;">Someone needs you<br>to handle this one.</h1>' +
+            '<p style="margin-top:16px;color:var(--ink-soft);">She sent you this so she wouldn\'t have to pay for it or go get it. That\'s the whole ask — no questions, nothing to figure out.</p>' +
+            '<div style="margin-top:24px;background:#fff;border:1px solid var(--hairline);border-radius:16px;padding:20px 22px;">' +
+            '<div style="font-size:13px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.08em;">Covering</div>' +
+            '<div style="margin-top:6px;font-size:17px;">' + (req.label || 'a delivery') + '</div>' +
+            '<div style="margin-top:14px;font-size:32px;font-weight:600;color:var(--rose);">' + money(req.amount_cents) + '</div>' +
+            '</div>' +
+            '<button id="pay" class="badge" style="border:0;cursor:pointer;margin-top:24px;width:100%;">Cover it — ' + money(req.amount_cents) + '</button>' +
+            '<p style="margin-top:14px;font-size:13px;color:var(--ink-soft);text-align:center;">Pays through Stripe. Your statement just says OVAE. You only ever see this amount.</p>';
+
+          document.getElementById('pay').addEventListener('click', function () {
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Opening secure checkout…';
+            fetch(SB_URL + '/functions/v1/cover-checkout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: token }),
+            })
+              .then((r) => r.json())
+              .then((d) => { if (d.url) location.href = d.url; else throw new Error('no url'); })
+              .catch(() => { btn.disabled = false; btn.textContent = 'Something hiccuped — tap to try again'; });
+          });
+        })
+        .catch(() => {
+          document.getElementById('status').textContent = 'Could not load this link. Try again in a moment.';
+        });
+    }
+  }
+</script>
+
+</body>
+</html>
