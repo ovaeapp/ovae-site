@@ -53,9 +53,14 @@
         headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({ p_token: token }),
       })
-        .then((r) => r.json())
+        .then((r) => { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
         .then((rows) => {
-          const req = Array.isArray(rows) ? rows[0] : rows;
+          // get_cover_request returns an ARRAY of rows. Anything else (a
+          // PostgREST error object with a .code) is a failure — treat it as
+          // one, never as a completed request, or the payer gets a false
+          // "already taken care of."
+          if (!Array.isArray(rows)) throw new Error('unexpected shape');
+          const req = rows[0];
           if (!req) {
             card.innerHTML = '<h1 style="font-size:26px;font-weight:300;">This link has expired.</h1><p style="margin-top:14px;color:var(--ink-soft);">Cover links last 48 hours. Ask for a new one.</p>';
             return;
@@ -90,7 +95,8 @@
           });
         })
         .catch(() => {
-          document.getElementById('status').textContent = 'Could not load this link. Try again in a moment.';
+          // Set card directly — #status may already be gone if render started.
+          card.innerHTML = '<h1 style="font-size:26px;font-weight:300;">Couldn\'t load this link.</h1><p style="margin-top:14px;color:var(--ink-soft);">Something hiccuped on our end. Refresh in a moment, or ask for a fresh link.</p>';
         });
     }
   }
