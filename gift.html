@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A gift for you — Ovae</title>
+  <meta name="robots" content="noindex">
+  <!-- Apple Smart App Banner: shows "Open in the Ovae app" at the top on iOS. -->
+  <meta name="apple-itunes-app" content="app-id=6787230141">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='54' r='34' fill='none' stroke='%23B5476E' stroke-width='16'/></svg>">
+  <style>
+    .giftcard {
+      margin-top: 24px; background: #fff; border: 1px solid var(--hairline);
+      border-radius: 18px; padding: 24px;
+    }
+    .giftcard .eyebrow { font-size: 13px; color: var(--rose); text-transform: uppercase; letter-spacing: 0.1em; }
+    .giftcard .name { margin-top: 8px; font-size: 24px; font-weight: 300; color: var(--ink); }
+    .giftcard .note { margin-top: 14px; font-style: italic; color: var(--ink-soft); line-height: 1.5; }
+    .field {
+      margin-top: 12px; width: 100%; box-sizing: border-box; height: 48px;
+      border: 1.5px solid var(--hairline); border-radius: 12px; padding: 0 14px;
+      font: inherit; color: var(--ink); background: #fff;
+    }
+    .field:focus { outline: none; border-color: var(--rose); }
+    .linkrow {
+      margin-top: 16px; display: flex; gap: 8px; align-items: stretch;
+    }
+    .linkrow input { flex: 1; font-size: 13px; color: var(--ink-soft); }
+    .mini { font-size: 13px; color: var(--ink-soft); margin-top: 12px; }
+    #err { margin-top: 12px; color: var(--rose); font-size: 14px; min-height: 1em; }
+    .ghost {
+      background: transparent; color: var(--rose); border: 1.5px solid var(--rose);
+      border-radius: 999px; padding: 12px 18px; cursor: pointer; font: inherit; font-weight: 600;
+    }
+    /* main.doc a colours links rose; our filled badge links need white text. */
+    main.doc a.badge { color: #fff; }
+  </style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a href="/" aria-label="Ovae home"><img class="mark" src="wordmark.svg" alt="ovae"></a>
+  </div>
+</header>
+
+<main class="doc">
+  <div class="wrap" id="card" style="max-width:460px;">
+    <p id="status" class="updated">Loading…</p>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© 2026 Ovae Health, Inc.</span>
+    <a href="privacy.html">Privacy</a>
+    <span id="foot">Nothing ships until you accept it. The sender never sees your address.</span>
+  </div>
+</footer>
+
+<script>
+  const SB_URL = 'https://wftnynwtesdtuuteugib.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmdG55bnd0ZXNkdHV1dGV1Z2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMjI5NzMsImV4cCI6MjA5ODU5ODk3M30.-MJ2uuBJsyAvhHCpe2XWfAE7K6GhzXPkHCfFcEADZEM';
+  const APP_STORE = 'https://apps.apple.com/app/id6787230141';
+
+  const card = document.getElementById('card');
+  const params = new URLSearchParams(location.search);
+  const token = params.get('token');
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+  // ── Sender's post-payment view: give them the link + a pre-filled text ──────
+  function renderSenderShare() {
+    const shareUrl = 'https://ovae.health/gift.html?token=' + encodeURIComponent(token);
+    const sms = 'sms:?&body=' + encodeURIComponent('I sent you something on Ovae — open it here: ' + shareUrl);
+    document.getElementById('foot').textContent = 'She chooses when it arrives. You never see her address.';
+    card.innerHTML =
+      '<h1 style="font-size:28px;font-weight:300;">Paid. Now send it.</h1>' +
+      '<p style="margin-top:14px;color:var(--ink-soft);">Text her this link. She opens it and accepts — and picks when it arrives. She never sees what you paid.</p>' +
+      '<div class="linkrow">' +
+        '<input class="field" id="share" readonly value="' + esc(shareUrl) + '">' +
+        '<button class="ghost" id="copy" type="button">Copy</button>' +
+      '</div>' +
+      '<a class="badge" style="margin-top:16px;width:100%;box-sizing:border-box;text-align:center;" href="' + esc(sms) + '">Text it now</a>' +
+      '<p class="mini" style="text-align:center;">The link works for 90 days.</p>';
+    document.getElementById('copy').addEventListener('click', function () {
+      const inp = document.getElementById('share');
+      inp.select();
+      navigator.clipboard && navigator.clipboard.writeText(inp.value);
+      this.textContent = 'Copied';
+    });
+  }
+
+  // ── Recipient's claim view ──────────────────────────────────────────────────
+  function renderClaim(gift) {
+    const openApp = 'ovae://gift?token=' + encodeURIComponent(token);
+    card.innerHTML =
+      '<div class="giftcard">' +
+        '<div class="eyebrow">Someone sent you</div>' +
+        '<div class="name">' + esc(gift.display_label || 'a little something') + '</div>' +
+        (gift.note ? '<div class="note">“' + esc(gift.note) + '”</div>' : '') +
+      '</div>' +
+      '<a class="badge" id="openapp" style="margin-top:20px;width:100%;box-sizing:border-box;text-align:center;" href="' + esc(openApp) + '">Open in Ovae to accept it</a>' +
+      '<p class="mini" style="text-align:center;">Accept in the app and keep it for the day you want it — plus your cycle companion, free, forever.</p>' +
+      '<button class="ghost" id="webclaim" type="button" style="margin-top:18px;width:100%;">No app? Accept it here</button>' +
+      '<div id="webbox"></div>';
+
+    // "Open in Ovae": try the app; if we're still here ~1.4s later, the app
+    // isn't installed — send them to the App Store.
+    document.getElementById('openapp').addEventListener('click', function (e) {
+      let hidden = false;
+      const onHide = () => { hidden = true; };
+      document.addEventListener('visibilitychange', onHide, { once: true });
+      window.addEventListener('pagehide', onHide, { once: true });
+      setTimeout(() => {
+        document.removeEventListener('visibilitychange', onHide);
+        if (!hidden) location.href = APP_STORE;
+      }, 1400);
+    });
+
+    document.getElementById('webclaim').addEventListener('click', renderWebClaim);
+  }
+
+  // Web claim: prove it's HER with an email code, THEN claim. This is the
+  // consent gate — only an authenticated recipient can accept, so a sender
+  // who holds the token cannot direct the gift anywhere.
+  function renderWebClaim() {
+    const box = document.getElementById('webbox');
+    box.innerHTML =
+      '<p class="mini">Accepting without the app takes a quick email code — that\'s how we make sure only you can accept it.</p>' +
+      '<input class="field" id="email" type="email" inputmode="email" placeholder="your email" autocomplete="email">' +
+      '<button class="badge" id="sendcode" type="button" style="margin-top:12px;width:100%;box-sizing:border-box;border:0;">Email me a code</button>' +
+      '<div id="err"></div>';
+    document.getElementById('sendcode').addEventListener('click', requestCode);
+  }
+
+  function requestCode() {
+    const email = document.getElementById('email').value.trim();
+    const err = document.getElementById('err');
+    if (!email || email.indexOf('@') < 0) { err.textContent = 'Enter a valid email.'; return; }
+    const btn = document.getElementById('sendcode');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    fetch(SB_URL + '/auth/v1/otp', {
+      method: 'POST',
+      headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, create_user: true }),
+    })
+      .then((r) => { if (!r.ok) throw new Error('otp ' + r.status); return r.json().catch(() => ({})); })
+      .then(() => {
+        const box = document.getElementById('webbox');
+        box.innerHTML =
+          '<p class="mini">Check ' + esc(email) + ' for a 6-digit code.</p>' +
+          '<input class="field" id="code" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code">' +
+          '<button class="badge" id="verify" type="button" style="margin-top:12px;width:100%;box-sizing:border-box;border:0;">Accept my gift</button>' +
+          '<div id="err"></div>';
+        document.getElementById('verify').addEventListener('click', () => verifyAndClaim(email));
+      })
+      .catch(() => { btn.disabled = false; btn.textContent = 'Email me a code'; document.getElementById('err').textContent = 'Couldn\'t send the code — try again.'; });
+  }
+
+  function verifyAndClaim(email) {
+    const code = document.getElementById('code').value.trim();
+    const err = document.getElementById('err');
+    if (!code) { err.textContent = 'Enter the code from your email.'; return; }
+    const btn = document.getElementById('verify');
+    btn.disabled = true; btn.textContent = 'Accepting…';
+    fetch(SB_URL + '/auth/v1/verify', {
+      method: 'POST',
+      headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'email', email: email, token: code }),
+    })
+      .then((r) => { if (!r.ok) throw new Error('verify ' + r.status); return r.json(); })
+      .then((auth) => {
+        const jwt = auth && auth.access_token;
+        if (!jwt) throw new Error('no session');
+        return fetch(SB_URL + '/rest/v1/rpc/claim_gift_link', {
+          method: 'POST',
+          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + jwt, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ p_token: token }),
+        });
+      })
+      .then((r) => { if (!r.ok) throw new Error('claim ' + r.status); return r.json(); })
+      .then((ok) => {
+        if (ok !== true) throw new Error('not claimable');
+        card.innerHTML =
+          '<h1 style="font-size:28px;font-weight:300;">It\'s yours.</h1>' +
+          '<p style="margin-top:14px;color:var(--ink-soft);">We\'ll reach out to arrange delivery — you pick where and when. Nothing was shared with whoever sent it.</p>' +
+          '<a class="badge" style="margin-top:20px;width:100%;box-sizing:border-box;text-align:center;" href="' + APP_STORE + '">Get Ovae — free, forever</a>' +
+          '<p class="mini" style="text-align:center;">Your cycle companion, and every gift in one place.</p>';
+      })
+      .catch(() => { btn.disabled = false; btn.textContent = 'Accept my gift'; document.getElementById('err').textContent = 'That didn\'t work — check the code and try again.'; });
+  }
+
+  // ── Route ───────────────────────────────────────────────────────────────────
+  if (!token) {
+    document.getElementById('status').textContent = 'This link is missing something. Ask for a fresh one.';
+  } else if (params.get('sent') === '1') {
+    renderSenderShare();
+  } else {
+    fetch(SB_URL + '/rest/v1/rpc/get_gift_link', {
+      method: 'POST',
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_token: token }),
+    })
+      .then((r) => { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+      .then((rows) => {
+        if (!Array.isArray(rows)) throw new Error('unexpected shape');
+        const gift = rows[0];
+        if (!gift) {
+          card.innerHTML = '<h1 style="font-size:26px;font-weight:300;">This gift has expired.</h1><p style="margin-top:14px;color:var(--ink-soft);">Gift links last 90 days. Ask for a new one.</p>';
+          return;
+        }
+        if (gift.status === 'pending') {
+          card.innerHTML = '<h1 style="font-size:26px;font-weight:300;">Almost there.</h1><p style="margin-top:14px;color:var(--ink-soft);">This gift isn\'t quite ready yet. Check back in a few minutes.</p>';
+          return;
+        }
+        if (gift.status === 'claimed' || gift.status === 'fulfilled') {
+          card.innerHTML = '<h1 style="font-size:26px;font-weight:300;">Already accepted.</h1><p style="margin-top:14px;color:var(--ink-soft);">This one\'s taken care of — it\'s on its way.</p>';
+          return;
+        }
+        renderClaim(gift); // status === 'paid'
+      })
+      .catch(() => {
+        card.innerHTML = '<h1 style="font-size:26px;font-weight:300;">Couldn\'t load this gift.</h1><p style="margin-top:14px;color:var(--ink-soft);">Something hiccuped on our end. Refresh in a moment, or ask for a fresh link.</p>';
+      });
+  }
+</script>
+
+</body>
+</html>

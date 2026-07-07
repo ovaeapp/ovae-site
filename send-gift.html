@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Send a gift — Ovae</title>
+  <meta name="description" content="Send someone a little something on Ovae. No app needed — pick it, pay, and text them the link. They choose when it arrives.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='54' r='34' fill='none' stroke='%23B5476E' stroke-width='16'/></svg>">
+  <style>
+    .gifts { margin-top: 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 560px) { .gifts { grid-template-columns: 1fr; } }
+    .gift {
+      background: #fff; border: 1.5px solid var(--hairline); border-radius: 16px;
+      padding: 16px 18px; cursor: pointer; text-align: left; transition: border-color .15s, background .15s;
+    }
+    .gift:hover { border-color: var(--rose); }
+    .gift[aria-pressed="true"] { border-color: var(--rose); background: var(--rose-soft); }
+    .gift .name { font-size: 16px; font-weight: 600; color: var(--ink); }
+    .gift .price { margin-top: 4px; font-size: 14px; color: var(--ink-soft); }
+    #note {
+      margin-top: 20px; width: 100%; box-sizing: border-box; min-height: 84px;
+      border: 1.5px solid var(--hairline); border-radius: 14px; padding: 12px 14px;
+      font: inherit; color: var(--ink); background: #fff; resize: vertical;
+    }
+    #note:focus { outline: none; border-color: var(--rose); }
+    #err { margin-top: 14px; color: var(--rose); font-size: 14px; min-height: 1em; }
+  </style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a href="/" aria-label="Ovae home"><img class="mark" src="wordmark.svg" alt="ovae"></a>
+  </div>
+</header>
+
+<main class="doc">
+  <div class="wrap" style="max-width:560px;">
+    <h1 style="font-size:30px;font-weight:300;line-height:1.15;">Send her a<br>little something.</h1>
+    <p style="margin-top:16px;color:var(--ink-soft);">Pick it, add a line if you like, and pay. You'll get a link to text her — she chooses when it arrives. No app needed, on either side.</p>
+
+    <div class="gifts" id="gifts" role="group" aria-label="Choose a gift"></div>
+
+    <textarea id="note" maxlength="280" placeholder="A line in your voice — she'll see it with the gift (optional)"></textarea>
+
+    <div id="err"></div>
+    <button id="send" class="badge" style="border:0;cursor:pointer;margin-top:18px;width:100%;opacity:0.5;" disabled>Choose a gift first</button>
+    <p style="margin-top:14px;font-size:13px;color:var(--ink-soft);text-align:center;">Pays through Stripe. Your statement just says OVAE. She never sees the price.</p>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© 2026 Ovae Health, Inc.</span>
+    <a href="privacy.html">Privacy</a>
+    <span>Nothing ships until she accepts it. You never see her address.</span>
+  </div>
+</footer>
+
+<script>
+  const SB_URL = 'https://wftnynwtesdtuuteugib.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmdG55bnd0ZXNkdHV1dGV1Z2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMjI5NzMsImV4cCI6MjA5ODU5ODk3M30.-MJ2uuBJsyAvhHCpe2XWfAE7K6GhzXPkHCfFcEADZEM';
+
+  // Curated public gift menu. The `name` MUST match the products catalog
+  // exactly — create_gift_link prices it server-side by that name, so a
+  // tampered price here changes nothing. Prices shown are a guide; Stripe
+  // confirms the real amount.
+  const GIFTS = [
+    { name: 'Fresh Flowers', price: 34 },
+    { name: 'A Warm Meal', price: 22 },
+    { name: 'Coffee Run', price: 9 },
+    { name: 'Bubble Tea Run', price: 9 },
+    { name: '72% Dark Chocolate Magnesium Bar', price: 6.5 },
+    { name: 'Ice Cream Duo (2 pints, cold-packed)', price: 15 },
+    { name: 'Ginger + Chamomile Cramp Tea (20 bags)', price: 11 },
+    { name: 'Warming Relief Patches (12)', price: 14.99 },
+  ];
+  // Friendlier labels for a few catalog names; falls back to the name.
+  const LABEL = {
+    '72% Dark Chocolate Magnesium Bar': 'Dark Chocolate',
+    'Ice Cream Duo (2 pints, cold-packed)': 'Ice Cream',
+    'Ginger + Chamomile Cramp Tea (20 bags)': 'Cramp Tea',
+    'Warming Relief Patches (12)': 'Heat Patches',
+  };
+
+  let selected = null;
+  const grid = document.getElementById('gifts');
+  const sendBtn = document.getElementById('send');
+  const err = document.getElementById('err');
+
+  GIFTS.forEach((g) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'gift';
+    b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = '<div class="name">' + (LABEL[g.name] || g.name) + '</div>' +
+                  '<div class="price">$' + g.price.toFixed(2) + '</div>';
+    b.addEventListener('click', () => {
+      selected = g.name;
+      [...grid.children].forEach((c) => c.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      sendBtn.disabled = false;
+      sendBtn.style.opacity = '1';
+      sendBtn.textContent = 'Send this gift';
+      err.textContent = '';
+    });
+    grid.appendChild(b);
+  });
+
+  sendBtn.addEventListener('click', () => {
+    if (!selected) return;
+    sendBtn.disabled = true;
+    sendBtn.style.opacity = '0.6';
+    sendBtn.textContent = 'Opening secure checkout…';
+    err.textContent = '';
+    const note = document.getElementById('note').value.trim();
+
+    fetch(SB_URL + '/rest/v1/rpc/create_gift_link', {
+      method: 'POST',
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_product_name: selected, p_note: note || null }),
+    })
+      .then((r) => { if (!r.ok) throw new Error('create ' + r.status); return r.json(); })
+      .then((token) => {
+        if (!token || typeof token !== 'string') throw new Error('no token');
+        return fetch(SB_URL + '/functions/v1/gift-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: token }),
+        });
+      })
+      .then((r) => r.json())
+      .then((d) => { if (d.url) location.href = d.url; else throw new Error('no url'); })
+      .catch(() => {
+        sendBtn.disabled = false;
+        sendBtn.style.opacity = '1';
+        sendBtn.textContent = 'Send this gift';
+        err.textContent = 'Something hiccuped — try again in a moment.';
+      });
+  });
+</script>
+
+</body>
+</html>
