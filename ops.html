@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ops — Ovae</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='54' r='34' fill='none' stroke='%23B5476E' stroke-width='16'/></svg>">
+  <style>
+    .order { background:#fff; border:1px solid var(--hairline); border-radius:16px; padding:18px 20px; margin-top:14px; }
+    .order .top { display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; }
+    .status { font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:4px 10px; border-radius:999px; }
+    .s-pending, .s-confirmed { background:#F6E7EC; color:#8A2C4F; }
+    .s-preparing { background:#FDF3E0; color:#8A6420; }
+    .s-out_for_delivery { background:#ECF1FB; color:#2C4E9E; }
+    .s-delivered { background:#EFF4E9; color:#3B6D11; }
+    .s-cancelled { background:#F0EBE8; color:#7A6A70; }
+    .items { margin-top:10px; font-size:14px; color:var(--ink); }
+    .meta { margin-top:8px; font-size:13px; color:var(--ink-soft); line-height:1.5; }
+    .btns { margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+    .btns button {
+      font:inherit; font-size:13px; font-weight:600; padding:9px 14px; border-radius:999px;
+      border:1.5px solid var(--rose); background:transparent; color:var(--rose); cursor:pointer;
+    }
+    .btns button.primary { background:var(--rose); color:#fff; border:0; }
+    .btns button:disabled { opacity:.4; cursor:default; }
+    .field { width:100%; box-sizing:border-box; height:48px; border:1.5px solid var(--hairline); border-radius:12px; padding:0 14px; font:inherit; margin-top:10px; background:#fff; }
+    #err { color:var(--rose); font-size:14px; margin-top:10px; min-height:1em; }
+  </style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap"><a href="/" aria-label="Ovae home"><img class="mark" src="wordmark.svg" alt="ovae"></a></div>
+</header>
+
+<main class="doc">
+  <div class="wrap" id="card" style="max-width:560px;">
+    <h1 style="font-size:28px;font-weight:300;">Ops.</h1>
+    <p class="updated">Orders, with buttons. No table surgery.</p>
+    <div id="app"><p class="updated" style="margin-top:20px;">Loading…</p></div>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap"><span>© 2026 Ovae Health, Inc.</span><span>Ops only — everyone else gets a polite 403.</span></div>
+</footer>
+
+<script>
+  const SB_URL = 'https://wftnynwtesdtuuteugib.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmdG55bnd0ZXNkdHV1dGV1Z2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMjI5NzMsImV4cCI6MjA5ODU5ODk3M30.-MJ2uuBJsyAvhHCpe2XWfAE7K6GhzXPkHCfFcEADZEM';
+  const app = document.getElementById('app');
+  const esc = (x) => String(x == null ? '' : x).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  const NEXT = {
+    pending:          [['preparing','Start preparing'],['out_for_delivery','On its way'],['delivered','Delivered']],
+    confirmed:        [['preparing','Start preparing'],['out_for_delivery','On its way'],['delivered','Delivered']],
+    preparing:        [['out_for_delivery','On its way'],['delivered','Delivered']],
+    out_for_delivery: [['delivered','Delivered']],
+    delivered:        [],
+    cancelled:        [],
+  };
+  const NICE = { pending:'Requested', confirmed:'Requested', preparing:'Preparing', out_for_delivery:'On its way', delivered:'Delivered', cancelled:'Cancelled' };
+
+  let jwt = sessionStorage.getItem('ops_jwt');
+
+  function signInUI() {
+    app.innerHTML =
+      '<p class="updated" style="margin-top:20px;">Sign in with your ops email.</p>' +
+      '<input class="field" id="email" type="email" placeholder="you@ovae.health">' +
+      '<button class="badge" id="send" style="border:0;cursor:pointer;margin-top:12px;width:100%;">Email me a code</button>' +
+      '<div id="err"></div>';
+    document.getElementById('send').onclick = async () => {
+      const email = document.getElementById('email').value.trim();
+      const r = await fetch(SB_URL + '/auth/v1/otp', { method:'POST', headers:{ apikey:SB_KEY, 'Content-Type':'application/json' }, body: JSON.stringify({ email, create_user:false }) });
+      if (!r.ok) { document.getElementById('err').textContent = 'Could not send the code.'; return; }
+      app.innerHTML =
+        '<p class="updated" style="margin-top:20px;">Code sent to ' + esc(email) + '.</p>' +
+        '<input class="field" id="code" inputmode="numeric" placeholder="6-digit code">' +
+        '<button class="badge" id="verify" style="border:0;cursor:pointer;margin-top:12px;width:100%;">Open ops</button>' +
+        '<div id="err"></div>';
+      document.getElementById('verify').onclick = async () => {
+        const code = document.getElementById('code').value.trim();
+        const v = await fetch(SB_URL + '/auth/v1/verify', { method:'POST', headers:{ apikey:SB_KEY, 'Content-Type':'application/json' }, body: JSON.stringify({ type:'email', email, token: code }) });
+        const d = await v.json().catch(() => ({}));
+        if (!v.ok || !d.access_token) { document.getElementById('err').textContent = 'That code didn\'t work.'; return; }
+        jwt = d.access_token;
+        sessionStorage.setItem('ops_jwt', jwt);
+        load();
+      };
+    };
+  }
+
+  async function call(body) {
+    const r = await fetch(SB_URL + '/functions/v1/ops-orders', {
+      method: 'POST',
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + jwt, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (r.status === 401 || r.status === 403) { sessionStorage.removeItem('ops_jwt'); jwt = null; signInUI(); throw new Error('auth'); }
+    return r.json();
+  }
+
+  function itemsLine(items) {
+    if (!Array.isArray(items)) return '';
+    return items.map((it) => `${it.qty} × ${esc(it.name ?? it.product_id)}`).join('<br>');
+  }
+
+  async function load() {
+    app.innerHTML = '<p class="updated" style="margin-top:20px;">Loading orders…</p>';
+    let d;
+    try { d = await call({ action: 'list' }); } catch { return; }
+    if (!d.orders) { app.innerHTML = '<p class="updated" style="margin-top:20px;">Could not load orders.</p>'; return; }
+    if (d.orders.length === 0) { app.innerHTML = '<p class="updated" style="margin-top:20px;">No orders yet. When one lands, it appears here.</p>'; return; }
+    app.innerHTML = d.orders.map((o) => {
+      const when = new Date(o.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+      const addr = o.address ? `${esc(o.address.label)} — ${esc(o.address.line1)}${o.address.line2 ? ', ' + esc(o.address.line2) : ''}, ${esc(o.address.city)}, ${esc(o.address.state)} ${esc(o.address.zip)}` : 'No address — confirm with her';
+      return `<div class="order">
+        <div class="top">
+          <strong>$${Number(o.total).toFixed(2)}</strong>
+          <span class="status s-${esc(o.status)}">${NICE[o.status] ?? esc(o.status)}</span>
+        </div>
+        <div class="items">${itemsLine(o.items)}</div>
+        <div class="meta">
+          ${when}${o.requestedDate ? ' · requested for ' + esc(o.requestedDate) : ''}<br>
+          ${addr}${o.note ? '<br>“' + esc(o.note) + '”' : ''}
+        </div>
+        <div class="btns">${(NEXT[o.status] ?? []).map(([st, label], i) =>
+          `<button class="${i === 0 ? 'primary' : ''}" data-id="${esc(o.id)}" data-st="${esc(st)}">${label}</button>`).join('')}
+        </div>
+      </div>`;
+    }).join('');
+    app.querySelectorAll('button[data-id]').forEach((b) => {
+      b.onclick = async () => {
+        b.disabled = true;
+        try { await call({ action:'advance', id: b.dataset.id, status: b.dataset.st }); } catch { return; }
+        load();
+      };
+    });
+  }
+
+  if (jwt) load(); else signInUI();
+</script>
+
+</body>
+</html>
