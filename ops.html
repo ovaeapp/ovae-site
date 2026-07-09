@@ -107,34 +107,74 @@
     return items.map((it) => `${it.qty} × ${esc(it.name ?? it.product_id)}`).join('<br>');
   }
 
+  function when(t) {
+    return new Date(t).toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+  }
+  function money(c) { return '$' + (Number(c) / 100).toFixed(2); }
+
+  // A simple fulfillment card for the non-order queues (send/cover/giftlink/
+  // credit): show what + to whom + when, one "Mark done" button.
+  function queueCard(kind, id, title, subtitle, meta) {
+    return `<div class="order">
+      <div class="top"><strong>${esc(title)}</strong><span class="status s-preparing">To fulfill</span></div>
+      ${subtitle ? `<div class="items">${esc(subtitle)}</div>` : ''}
+      <div class="meta">${esc(meta)}</div>
+      <div class="btns"><button class="primary" data-kind="${esc(kind)}" data-fid="${esc(id)}">Mark done</button></div>
+    </div>`;
+  }
+
+  function section(title, html) {
+    return html ? `<h2 style="font-size:15px;margin-top:28px;color:var(--ink);">${title}</h2>${html}` : '';
+  }
+
   async function load() {
-    app.innerHTML = '<p class="updated" style="margin-top:20px;">Loading orders…</p>';
+    app.innerHTML = '<p class="updated" style="margin-top:20px;">Loading…</p>';
     let d;
-    try { d = await call({ action: 'list' }); } catch { return; }
-    if (!d.orders) { app.innerHTML = '<p class="updated" style="margin-top:20px;">Could not load orders.</p>'; return; }
-    if (d.orders.length === 0) { app.innerHTML = '<p class="updated" style="margin-top:20px;">No orders yet. When one lands, it appears here.</p>'; return; }
-    app.innerHTML = d.orders.map((o) => {
-      const when = new Date(o.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+    try { d = await call({ action: 'queues' }); } catch { return; }
+    if (!d || !d.orders) { app.innerHTML = '<p class="updated" style="margin-top:20px;">Could not load the queues.</p>'; return; }
+
+    const orderHtml = (d.orders || []).map((o) => {
       const addr = o.address ? `${esc(o.address.label)} — ${esc(o.address.line1)}${o.address.line2 ? ', ' + esc(o.address.line2) : ''}, ${esc(o.address.city)}, ${esc(o.address.state)} ${esc(o.address.zip)}` : 'No address — confirm with her';
       return `<div class="order">
-        <div class="top">
-          <strong>$${Number(o.total).toFixed(2)}</strong>
-          <span class="status s-${esc(o.status)}">${NICE[o.status] ?? esc(o.status)}</span>
-        </div>
+        <div class="top"><strong>$${Number(o.total).toFixed(2)}</strong><span class="status s-${esc(o.status)}">${NICE[o.status] ?? esc(o.status)}</span></div>
         <div class="items">${itemsLine(o.items)}</div>
-        <div class="meta">
-          ${when}${o.requestedDate ? ' · requested for ' + esc(o.requestedDate) : ''}<br>
-          ${addr}${o.note ? '<br>“' + esc(o.note) + '”' : ''}
-        </div>
-        <div class="btns">${(NEXT[o.status] ?? []).map(([st, label], i) =>
-          `<button class="${i === 0 ? 'primary' : ''}" data-id="${esc(o.id)}" data-st="${esc(st)}">${label}</button>`).join('')}
-        </div>
+        <div class="meta">${when(o.createdAt)}${o.requestedDate ? ' · requested for ' + esc(o.requestedDate) : ''}<br>${addr}${o.note ? '<br>“' + esc(o.note) + '”' : ''}</div>
+        <div class="btns">${(NEXT[o.status] ?? []).map(([st, label], i) => `<button class="${i === 0 ? 'primary' : ''}" data-id="${esc(o.id)}" data-st="${esc(st)}">${label}</button>`).join('')}</div>
       </div>`;
     }).join('');
+
+    const sendHtml = (d.sends || []).map((r) =>
+      queueCard('send', r.id, `Send to ${r.to}`, r.note ? `“${r.note}”` : '', `${esc(r.category || 'gift')} · ${when(r.createdAt)} · confirm address with her`)).join('');
+    const coverHtml = (d.covers || []).map((r) =>
+      queueCard('cover', r.id, r.label, money(r.amountCents) + ' · covered', `${when(r.createdAt)} · confirm address with her`)).join('');
+    const giftHtml = (d.giftLinks || []).map((r) =>
+      queueCard('giftlink', r.id, r.label, `for ${r.to}`, `accepted ${when(r.claimedAt)} · confirm address with her`)).join('');
+    const creditHtml = (d.credits || []).map((r) =>
+      queueCard('credit', r.id, r.label, `for ${r.to}`, `redeemed ${when(r.redeemedAt)} · confirm address with her`)).join('');
+
+    const total = (d.orders||[]).length + (d.sends||[]).length + (d.covers||[]).length + (d.giftLinks||[]).length + (d.credits||[]).length;
+    if (total === 0) { app.innerHTML = '<p class="updated" style="margin-top:20px;">Nothing to fulfill right now. New orders, gifts, and covers land here.</p>'; return; }
+
+    app.innerHTML =
+      section('Orders', orderHtml) +
+      section('Ovae Send — gifts to her', sendHtml) +
+      section('Covered — someone paid for her', coverHtml) +
+      section('Gift links — accepted', giftHtml) +
+      section('Gift credits — redeemed', creditHtml);
+
+    // Order stage buttons.
     app.querySelectorAll('button[data-id]').forEach((b) => {
       b.onclick = async () => {
         b.disabled = true;
         try { await call({ action:'advance', id: b.dataset.id, status: b.dataset.st }); } catch { return; }
+        load();
+      };
+    });
+    // Queue "Mark done" buttons.
+    app.querySelectorAll('button[data-fid]').forEach((b) => {
+      b.onclick = async () => {
+        b.disabled = true;
+        try { await call({ action:'fulfill', kind: b.dataset.kind, id: b.dataset.fid }); } catch { return; }
         load();
       };
     });
