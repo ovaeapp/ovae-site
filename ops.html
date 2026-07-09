@@ -152,7 +152,15 @@
     const creditHtml = (d.credits || []).map((r) =>
       queueCard('credit', r.id, r.label, `for ${r.to}`, `redeemed ${when(r.redeemedAt)} · confirm address with her`)).join('');
 
-    const total = (d.orders||[]).length + (d.sends||[]).length + (d.covers||[]).length + (d.giftLinks||[]).length + (d.credits||[]).length;
+    // Boxes are standing subscriptions, not one-shot tasks: no Mark-done —
+    // each cycle is a confirm-timing-then-arrange conversation.
+    const boxHtml = (d.boxes || []).map((r) => `<div class="order">
+      <div class="top"><strong>${esc(r.to)}'s box</strong><span class="status s-preparing">Standing</span></div>
+      <div class="items">${esc(String(r.itemCount))} items</div>
+      <div class="meta">aiming ${r.nextDelivery ? esc(r.nextDelivery) : 'next cycle'} (her app's estimate — cycle moves, CONFIRM with her before arranging)</div>
+    </div>`).join('');
+
+    const total = (d.orders||[]).length + (d.sends||[]).length + (d.covers||[]).length + (d.giftLinks||[]).length + (d.credits||[]).length + (d.boxes||[]).length;
     if (total === 0) { app.innerHTML = '<p class="updated" style="margin-top:20px;">Nothing to fulfill right now. New orders, gifts, and covers land here.</p>'; return; }
 
     app.innerHTML =
@@ -160,7 +168,8 @@
       section('Ovae Send — gifts to her', sendHtml) +
       section('Covered — someone paid for her', coverHtml) +
       section('Gift links — accepted', giftHtml) +
-      section('Gift credits — redeemed', creditHtml);
+      section('Gift credits — redeemed', creditHtml) +
+      section('Period boxes — standing', boxHtml);
 
     // Order stage buttons.
     app.querySelectorAll('button[data-id]').forEach((b) => {
