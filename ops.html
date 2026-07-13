@@ -136,7 +136,7 @@
     const orderHtml = (d.orders || []).map((o) => {
       const addr = o.address ? `${esc(o.address.label)} — ${esc(o.address.line1)}${o.address.line2 ? ', ' + esc(o.address.line2) : ''}, ${esc(o.address.city)}, ${esc(o.address.state)} ${esc(o.address.zip)}` : 'No address — confirm with her';
       return `<div class="order">
-        <div class="top"><strong>$${Number(o.total).toFixed(2)}</strong><span class="status s-${esc(o.status)}">${NICE[o.status] ?? esc(o.status)}</span></div>
+        <div class="top"><strong>${o.for ? esc(o.for) + ' · ' : ''}$${Number(o.total).toFixed(2)}</strong><span class="status s-${esc(o.status)}">${NICE[o.status] ?? esc(o.status)}</span></div>
         <div class="items">${itemsLine(o.items)}</div>
         <div class="meta">${when(o.createdAt)}${o.requestedDate ? ' · requested for ' + esc(o.requestedDate) : ''}<br>${addr}${o.note ? '<br>“' + esc(o.note) + '”' : ''}</div>
         <div class="btns">${(NEXT[o.status] ?? []).map(([st, label], i) => `<button class="${i === 0 ? 'primary' : ''}" data-id="${esc(o.id)}" data-st="${esc(st)}">${label}</button>`).join('')}</div>
