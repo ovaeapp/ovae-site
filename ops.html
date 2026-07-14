@@ -27,6 +27,12 @@
     .btns button:disabled { opacity:.4; cursor:default; }
     .field { width:100%; box-sizing:border-box; height:48px; border:1.5px solid var(--hairline); border-radius:12px; padding:0 14px; font:inherit; margin-top:10px; background:#fff; }
     #err { color:var(--rose); font-size:14px; margin-top:10px; min-height:1em; }
+    .alert { background:#FDF0EF; border:1px solid #E8B4B1; border-radius:16px; padding:14px 18px; margin-top:10px; }
+    .alert .kind { font-size:12px; font-weight:700; letter-spacing:.06em; color:#B23230; }
+    .alert .det { font-size:12.5px; color:var(--ink-soft); margin-top:6px; word-break:break-all; }
+    .cost { display:flex; gap:8px; align-items:center; margin-top:10px; }
+    .cost input { width:110px; height:36px; border:1.5px solid var(--hairline); border-radius:10px; padding:0 10px; font:inherit; }
+    .cost button { font:inherit; font-size:12.5px; font-weight:600; padding:8px 12px; border-radius:999px; border:1.5px solid var(--hairline); background:#fff; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -133,6 +139,12 @@
     try { d = await call({ action: 'queues' }); } catch { return; }
     if (!d || !d.orders) { app.innerHTML = '<p class="updated" style="margin-top:20px;">Could not load the queues.</p>'; return; }
 
+    const alertHtml = (d.alerts || []).map((a) => `<div class="alert">
+      <div class="kind">⚠ ${esc(a.kind)} · ${when(a.created_at)}</div>
+      <div class="det">${esc(JSON.stringify(a.detail))}</div>
+      <div class="btns"><button data-alert="${esc(a.id)}">Resolved</button></div>
+    </div>`).join('');
+
     const orderHtml = (d.orders || []).map((o) => {
       const addr = o.address ? `${esc(o.address.label)} — ${esc(o.address.line1)}${o.address.line2 ? ', ' + esc(o.address.line2) : ''}, ${esc(o.address.city)}, ${esc(o.address.state)} ${esc(o.address.zip)}` : 'No address — confirm with her';
       return `<div class="order">
@@ -140,6 +152,7 @@
         <div class="items">${itemsLine(o.items)}</div>
         <div class="meta">${when(o.createdAt)}${o.requestedDate ? ' · requested for ' + esc(o.requestedDate) : ''}<br>${addr}${o.note ? '<br>“' + esc(o.note) + '”' : ''}</div>
         <div class="btns">${(NEXT[o.status] ?? []).map(([st, label], i) => `<button class="${i === 0 ? 'primary' : ''}" data-id="${esc(o.id)}" data-st="${esc(st)}">${label}</button>`).join('')}</div>
+        <div class="cost"><input inputmode="decimal" placeholder="cost $" data-costfor="${esc(o.id)}"><button data-savecost="${esc(o.id)}">Save cost</button><span style="font-size:12px;color:var(--ink-soft);">what it actually cost you</span></div>
       </div>`;
     }).join('');
 
@@ -164,6 +177,7 @@
     if (total === 0) { app.innerHTML = '<p class="updated" style="margin-top:20px;">Nothing to fulfill right now. New orders, gifts, and covers land here.</p>'; return; }
 
     app.innerHTML =
+      section('⚠ Money alarms', alertHtml) +
       section('Orders', orderHtml) +
       section('Ovae Send — gifts to her', sendHtml) +
       section('Covered — someone paid for her', coverHtml) +
@@ -177,6 +191,25 @@
         b.disabled = true;
         try { await call({ action:'advance', id: b.dataset.id, status: b.dataset.st }); } catch { return; }
         load();
+      };
+    });
+    // Alert resolve buttons.
+    app.querySelectorAll('button[data-alert]').forEach((b) => {
+      b.onclick = async () => {
+        b.disabled = true;
+        try { await call({ action:'resolve', id: b.dataset.alert }); } catch { return; }
+        load();
+      };
+    });
+    // Landed-cost save (dollars in, cents stored).
+    app.querySelectorAll('button[data-savecost]').forEach((b) => {
+      b.onclick = async () => {
+        const input = app.querySelector(`input[data-costfor="${b.dataset.savecost}"]`);
+        const dollars = parseFloat(input.value);
+        if (!isFinite(dollars) || dollars < 0) { input.value = ''; return; }
+        b.disabled = true; b.textContent = 'Saved';
+        try { await call({ action:'cost', id: b.dataset.savecost, cents: Math.round(dollars * 100) }); } catch { return; }
+        setTimeout(() => { b.disabled = false; b.textContent = 'Save cost'; }, 1200);
       };
     });
     // Queue "Mark done" buttons.
