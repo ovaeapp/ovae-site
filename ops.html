@@ -136,7 +136,18 @@
   async function load() {
     app.innerHTML = '<p class="updated" style="margin-top:20px;">Loading…</p>';
     let d, st;
-    try { d = await call({ action: 'queues' }); st = await call({ action: 'stats' }); } catch { return; }
+    try { d = await call({ action: 'queues' }); } catch { return; }
+    try { st = await call({ action: 'stats' }); } catch { st = null; }
+
+    const scoreHtml = st && st.now ? `<div class="order">
+      <div class="top"><strong>Scoreboard</strong><span class="status s-delivered">live</span></div>
+      <div class="items">Accounts: <strong>${st.now.women ?? 0}</strong> · Active links: <strong>${st.now.linksActive ?? 0}</strong> · Paying partners: <strong>${st.now.paying ?? 0}</strong></div>
+      ${(st.days || []).length ? `<div class="meta" style="overflow-x:auto;"><table style="border-collapse:collapse;font-size:12px;">
+        <tr><th style="text-align:left;padding:2px 8px 2px 0;">day</th><th style="text-align:right;padding:2px 8px;">signups</th><th style="text-align:right;padding:2px 8px;">actives</th><th style="text-align:right;padding:2px 8px;">D1</th><th style="text-align:right;padding:2px 8px;">D7</th><th style="text-align:right;padding:2px 8px;">orders</th></tr>
+        ${(st.days || []).slice(0, 7).map((r) => `<tr><td style="padding:2px 8px 2px 0;">${esc(String(r.day).slice(0, 10))}</td><td style="text-align:right;padding:2px 8px;">${r.signups}</td><td style="text-align:right;padding:2px 8px;">${r.actives}</td><td style="text-align:right;padding:2px 8px;">${r.d1_cohort ? r.d1_retained + '/' + r.d1_cohort : '—'}</td><td style="text-align:right;padding:2px 8px;">${r.d7_cohort ? r.d7_retained + '/' + r.d7_cohort : '—'}</td><td style="text-align:right;padding:2px 8px;">${r.orders_total}</td></tr>`).join('')}
+      </table></div>` : '<div class="meta">Daily rollups appear here each morning.</div>'}
+    </div>` : '';
+
     if (!d || !d.orders) { app.innerHTML = '<p class="updated" style="margin-top:20px;">Could not load the queues.</p>'; return; }
 
     const alertHtml = (d.alerts || []).map((a) => `<div class="alert">
@@ -174,16 +185,18 @@
     </div>`).join('');
 
     const total = (d.orders||[]).length + (d.sends||[]).length + (d.covers||[]).length + (d.giftLinks||[]).length + (d.credits||[]).length + (d.boxes||[]).length;
-    if (total === 0) { app.innerHTML = '<p class="updated" style="margin-top:20px;">Nothing to fulfill right now. New orders, gifts, and covers land here.</p>'; return; }
+    if (total === 0) {
+      app.innerHTML =
+        section('Scoreboard — counted, never tracked', scoreHtml) +
+        section('⚠ Money alarms', alertHtml) +
+        '<p class="updated" style="margin-top:20px;">Nothing to fulfill right now. New orders, gifts, and covers land here.</p>';
+      // Alert resolve buttons still need wiring in this branch.
+      app.querySelectorAll('button[data-alert]').forEach((b) => {
+        b.onclick = async () => { b.disabled = true; try { await call({ action:'resolve', id: b.dataset.alert }); } catch { return; } load(); };
+      });
+      return;
+    }
 
-    const scoreHtml = st && st.now ? `<div class="order">
-      <div class="top"><strong>Scoreboard</strong><span class="status s-delivered">live</span></div>
-      <div class="items">Women on Ovae: <strong>${st.now.women ?? 0}</strong> · Active links: <strong>${st.now.linksActive ?? 0}</strong> · Paying partners: <strong>${st.now.paying ?? 0}</strong></div>
-      ${(st.days || []).length ? `<div class="meta" style="overflow-x:auto;"><table style="border-collapse:collapse;font-size:12px;">
-        <tr><th style="text-align:left;padding:2px 8px 2px 0;">day</th><th style="text-align:right;padding:2px 8px;">signups</th><th style="text-align:right;padding:2px 8px;">actives</th><th style="text-align:right;padding:2px 8px;">D1</th><th style="text-align:right;padding:2px 8px;">D7</th><th style="text-align:right;padding:2px 8px;">orders</th></tr>
-        ${(st.days || []).slice(0, 7).map((r) => `<tr><td style="padding:2px 8px 2px 0;">${esc(String(r.day).slice(0, 10))}</td><td style="text-align:right;padding:2px 8px;">${r.signups}</td><td style="text-align:right;padding:2px 8px;">${r.actives}</td><td style="text-align:right;padding:2px 8px;">${r.d1_cohort ? r.d1_retained + '/' + r.d1_cohort : '—'}</td><td style="text-align:right;padding:2px 8px;">${r.d7_cohort ? r.d7_retained + '/' + r.d7_cohort : '—'}</td><td style="text-align:right;padding:2px 8px;">${r.orders_total}</td></tr>`).join('')}
-      </table></div>` : '<div class="meta">Daily rollups appear here each morning.</div>'}
-    </div>` : '';
 
     app.innerHTML =
       section('Scoreboard — counted, never tracked', scoreHtml) +
