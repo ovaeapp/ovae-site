@@ -20,7 +20,7 @@
 <main class="doc">
   <div class="wrap">
     <h1>The privacy promise</h1>
-    <p class="updated">Last updated July 3, 2026 · Ovae Health, Inc. · hello@ovae.health</p>
+    <p class="updated">Last updated July 13, 2026 · Ovae Health, Inc. · hello@ovae.health</p>
 
     <p>This is our privacy policy, written the way we write everything: plainly. A period-tracking app asks for some of the most sensitive data that exists. Here is exactly what we do with it — and more importantly, what we will never do.</p>
 
@@ -53,7 +53,10 @@
     <p>&ldquo;Erase everything&rdquo; in the app means everything: your account and every record attached to it are deleted from our live systems immediately, in one transaction, and age out of our infrastructure provider's rolling backups within 30 days. No export is retained, no &ldquo;deactivated&rdquo; limbo, no retention tricks. You can also export all of your data at any time, from the app, for free.</p>
 
     <h2>Who else touches data</h2>
-    <p>We use a small number of infrastructure providers to run Ovae: Supabase (database hosting), Stripe (payment processing), Resend (transactional email, e.g. sign-in codes), and Apple (app distribution and push notifications). Each receives only the minimum needed to do its job. None of them may use your data for anything else.</p>
+    <p>We use a small number of infrastructure providers to run Ovae: Supabase (database hosting), Stripe (payment processing), Resend (transactional email, e.g. sign-in codes), Apple (app distribution and push notifications), and Sentry (crash reporting — see below). Each receives only the minimum needed to do its job. None of them may use your data for anything else.</p>
+
+    <h2>When the app crashes</h2>
+    <p>When Ovae crashes, a technical report goes to Sentry so we can fix what broke. <strong>Our crash reporter sees code errors, never your data, under a signed agreement.</strong> A report contains what failed in the code, on which device model and OS version — nothing else. Before it leaves your phone, the report is scrubbed in code: no name, no email, no account identity, no history of which screens you visited, no health information, no screenshots, and anything shaped like personal text is redacted. These limits are enforced by automated tests that fail our build if anyone ever loosens them.</p>
 
     <h2>What Ovae is not</h2>
     <p>Ovae is a companion and a tracker — <strong>not a medical device, and not medical advice.</strong> Predictions are estimates that we deliberately present with honesty about their uncertainty. Ovae must not be relied on as contraception or to diagnose any condition. Patterns the app flags are observations to discuss with a clinician, never diagnoses.</p>
