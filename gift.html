@@ -35,6 +35,34 @@
     }
     /* main.doc a colours links rose; our filled badge links need white text. */
     main.doc a.badge { color: #fff; }
+    /* The unwrap — Kakao's moment, Ovae's way. */
+    #unwrap {
+      position: fixed; inset: 0; z-index: 40; border: 0; width: 100%;
+      background: rgba(42, 17, 32, 0.55); cursor: pointer; font: inherit;
+      display: flex; align-items: center; justify-content: center; padding: 32px;
+      opacity: 0; transition: opacity 0.4s ease;
+    }
+    #unwrap.in { opacity: 1; }
+    #unwrap.out { opacity: 0; }
+    .parcelcard {
+      background: #fff; border-radius: 18px; padding: 36px 28px; max-width: 340px; width: 100%;
+      text-align: center; box-shadow: 0 12px 40px rgba(90, 40, 60, 0.25);
+      transform: translateY(14px); transition: transform 0.4s ease;
+    }
+    #unwrap.in .parcelcard { transform: translateY(0); }
+    .parcel { display: inline-block; animation: parcelwiggle 2.4s ease-in-out infinite; }
+    @keyframes parcelwiggle {
+      0%, 55%, 100% { transform: rotate(0deg); }
+      65% { transform: rotate(-5deg); }
+      80% { transform: rotate(5deg); }
+      90% { transform: rotate(-2deg); }
+    }
+    .parcelcard h2 { margin: 18px 0 0; font-size: 24px; font-weight: 300; color: var(--ink); }
+    .parcelcard .tap { margin-top: 14px; font-size: 14px; color: var(--rose); letter-spacing: 0.04em; }
+    @media (prefers-reduced-motion: reduce) {
+      #unwrap, .parcelcard { transition: none; }
+      .parcel { animation: none; }
+    }
   </style>
 </head>
 <body>
@@ -92,8 +120,30 @@
     });
   }
 
+  // ── The unwrap ceremony: parcel first, her tap opens it ────────────────────
+  function showUnwrap() {
+    var b = document.createElement('button');
+    b.id = 'unwrap';
+    b.type = 'button';
+    b.setAttribute('aria-label', 'Something arrived for you. Tap to open.');
+    b.innerHTML =
+      '<span class="parcelcard">' +
+        '<span class="parcel"><svg viewBox="0 0 12 12" width="96" height="96" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="0" width="2" height="1" fill="#B5476E"/><rect x="7" y="0" width="2" height="1" fill="#B5476E"/><rect x="3" y="1" width="1" height="1" fill="#B5476E"/><rect x="6" y="1" width="1" height="1" fill="#B5476E"/><rect x="9" y="1" width="1" height="1" fill="#B5476E"/><rect x="4" y="2" width="5" height="1" fill="#B5476E"/><rect x="2" y="3" width="4" height="1" fill="#F6C6D4"/><rect x="6" y="3" width="1" height="1" fill="#B5476E"/><rect x="7" y="3" width="4" height="1" fill="#F6C6D4"/><rect x="2" y="4" width="1" height="1" fill="#F6C6D4"/><rect x="3" y="4" width="1" height="1" fill="#FFFFFF"/><rect x="4" y="4" width="2" height="1" fill="#F6C6D4"/><rect x="6" y="4" width="1" height="1" fill="#B5476E"/><rect x="7" y="4" width="4" height="1" fill="#F6C6D4"/><rect x="2" y="5" width="4" height="1" fill="#F6C6D4"/><rect x="6" y="5" width="1" height="1" fill="#B5476E"/><rect x="7" y="5" width="4" height="1" fill="#F6C6D4"/><rect x="2" y="6" width="9" height="1" fill="#B5476E"/><rect x="2" y="7" width="4" height="1" fill="#F6C6D4"/><rect x="6" y="7" width="1" height="1" fill="#B5476E"/><rect x="7" y="7" width="4" height="1" fill="#F6C6D4"/><rect x="2" y="8" width="4" height="1" fill="#F6C6D4"/><rect x="6" y="8" width="1" height="1" fill="#B5476E"/><rect x="7" y="8" width="4" height="1" fill="#F6C6D4"/><rect x="2" y="9" width="3" height="1" fill="#E79FB5"/><rect x="5" y="9" width="1" height="1" fill="#F6C6D4"/><rect x="6" y="9" width="1" height="1" fill="#B5476E"/><rect x="7" y="9" width="1" height="1" fill="#F6C6D4"/><rect x="8" y="9" width="3" height="1" fill="#E79FB5"/><rect x="2" y="10" width="3" height="1" fill="#E79FB5"/><rect x="5" y="10" width="1" height="1" fill="#F6C6D4"/><rect x="6" y="10" width="1" height="1" fill="#B5476E"/><rect x="7" y="10" width="1" height="1" fill="#F6C6D4"/><rect x="8" y="10" width="3" height="1" fill="#E79FB5"/></svg></span>' +
+        '<h2>Something arrived for you</h2>' +
+        '<span class="tap">Tap to open</span>' +
+      '</span>';
+    document.body.appendChild(b);
+    requestAnimationFrame(function () { b.classList.add('in'); });
+    b.addEventListener('click', function () {
+      b.classList.remove('in');
+      b.classList.add('out');
+      setTimeout(function () { b.remove(); }, 420);
+    }, { once: true });
+  }
+
   // ── Recipient's claim view ──────────────────────────────────────────────────
   function renderClaim(gift) {
+    showUnwrap();
     const openApp = 'ovae://gift?token=' + encodeURIComponent(token);
     card.innerHTML =
       '<div class="giftcard">' +
