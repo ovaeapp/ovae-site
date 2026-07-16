@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trust — Ovae</title>
+  <meta name="description" content="Provable privacy, not promised privacy: what Ovae never stores, how fast things delete, and this morning's live security self-check.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='54' r='34' fill='none' stroke='%23B5476E' stroke-width='16'/></svg>">
+  <style>
+    .check {
+      margin-top: 24px; border-radius: 18px; padding: 22px 24px;
+      border: 1.5px solid var(--hairline); background: #fff;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .check .dot { width: 14px; height: 14px; border-radius: 50%; background: #C7B9BF; flex: none; }
+    .check.ok .dot { background: #2E7D4F; box-shadow: 0 0 0 5px rgba(46,125,79,0.12); }
+    .check.warn .dot { background: #B5476E; box-shadow: 0 0 0 5px rgba(181,71,110,0.12); }
+    .check .big { font-size: 19px; color: var(--ink); }
+    .check .sub { font-size: 13.5px; color: var(--ink-soft); margin-top: 3px; }
+    table.clocks td, table.clocks th { padding: 9px 12px 9px 0; vertical-align: top; }
+    table.clocks td:last-child { color: var(--ink-soft); }
+    .never li { margin-top: 8px; }
+    .mono { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a href="/" aria-label="Ovae home"><img class="mark" src="wordmark.svg" alt="ovae"></a>
+    <nav><a href="privacy.html">Privacy</a><a href="support.html">Support</a></nav>
+  </div>
+</header>
+
+<main class="doc">
+  <div class="wrap">
+    <h1>Don't take our word for it.</h1>
+    <p class="updated">Privacy you can check, not just read about.</p>
+
+    <p>Every period app promises privacy. Promises are copy — anyone can write them. This page is different: it shows you the machinery. What we never store, how fast things delete themselves, and the result of the security check our database runs on itself <em>every morning</em> — published here, live, including on the mornings we'd rather it weren't.</p>
+
+    <div class="check" id="check">
+      <div class="dot"></div>
+      <div>
+        <div class="big" id="checkline">Checking this morning's result…</div>
+        <div class="sub" id="checksub">The database audits its own security posture daily — row-level security on every table, locked functions, consent guards, rate limits.</div>
+      </div>
+    </div>
+
+    <h2>What we never store</h2>
+    <ul class="never">
+      <li><strong>No analytics or tracker SDKs.</strong> Not one. Scan the app with any network monitor — we ask journalists to. The only usage signal that exists is a date-only "opened the app today" mark, and even that self-deletes after 35 days.</li>
+      <li><strong>No location. No contacts. No photos.</strong> Never requested, nowhere to put them.</li>
+      <li><strong>No email next to health data.</strong> Your identity and your health records live in separate systems, joined only by a random ID — either half alone is close to worthless, including to a subpoena.</li>
+      <li><strong>No phantom predictions.</strong> Past your predicted date, the server stores <em>null</em> — not a guess. What we don't invent, no one can take.</li>
+      <li><strong>No free-text notes on our servers.</strong> Your notes stay on your phone.</li>
+    </ul>
+
+    <h2>How fast things delete themselves</h2>
+    <p>Retention here is enforced by code that runs daily — not by a policy document.</p>
+    <table class="clocks">
+      <tr><th style="text-align:left;">What</th><th style="text-align:left;">Gone in</th></tr>
+      <tr><td>An urgent ask (including emergency contraception)</td><td class="mono">7 days after it's delivered · 30 days no matter what</td></tr>
+      <tr><td>What a gift actually was</td><td class="mono">3 days after payment — then it's just "a little something"</td></tr>
+      <tr><td>"Opened the app today" marks</td><td class="mono">35 days</td></tr>
+      <tr><td>Notification history</td><td class="mono">90 days</td></tr>
+      <tr><td>Invite-code attempts</td><td class="mono">30 days</td></tr>
+      <tr><td>Your health data</td><td class="mono">Until <em>you</em> delete it — it's yours</td></tr>
+    </table>
+    <p>And "Erase everything" means everything: account and every record, one transaction, effective immediately — out of rolling backups within 30 days. No limbo, no retention tricks.</p>
+
+    <h2>What the morning check verifies</h2>
+    <p>Six structural checks, every day at 9:30: row-level security is on for every table · no email column has crept into the health schema · sensitive functions can't be called anonymously · the consent guard on partner links is intact · gift rate-limits are intact · the waitlist can't be read out. If any check fails, the result above says so — to you, at the same moment it says so to us.</p>
+
+    <h2>If you only remember one thing</h2>
+    <p>We designed Ovae so that the most dangerous thing our database could ever reveal about you is <em>roughly which weeks you opened an app</em>. Everything else is either on your phone, deleted on a clock, or was never collected. That's not a promise. It's architecture — and this page is the window.</p>
+
+    <p>Questions, challenges, security research: <a href="mailto:hello@ovae.health">hello@ovae.health</a>. A human reads it.</p>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© 2026 Ovae Health</span>
+    <a href="privacy.html">Privacy</a>
+    <a href="terms.html">Terms</a>
+    <a href="support.html">Support</a>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var URL = 'https://wftnynwtesdtuuteugib.supabase.co/rest/v1/rpc/trust_status';
+    var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmdG55bnd0ZXNkdHV1dGV1Z2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMjI5NzMsImV4cCI6MjA5ODU5ODk3M30.-MJ2uuBJsyAvhHCpe2XWfAE7K6GhzXPkHCfFcEADZEM';
+    var box = document.getElementById('check');
+    var line = document.getElementById('checkline');
+    var sub = document.getElementById('checksub');
+    fetch(URL, { method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: '{}' })
+      .then(function (r) { return r.json(); })
+      .then(function (s) {
+        if (!s || !s.checked_at) {
+          line.textContent = 'Self-check status unavailable right now.';
+          return;
+        }
+        var when = new Date(s.checked_at);
+        var stamp = when.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        if (s.verdict === 'all_clear') {
+          box.className = 'check ok';
+          line.textContent = 'Latest security self-check: all clear.';
+          sub.textContent = s.checks + ' structural checks passed · ran ' + stamp + ' · runs every morning, published here either way.';
+        } else {
+          box.className = 'check warn';
+          line.textContent = 'Latest self-check flagged something. We’re on it.';
+          sub.textContent = 'Ran ' + stamp + '. We publish this state honestly rather than hide it — that’s the point of this page.';
+        }
+      })
+      .catch(function () { line.textContent = 'Self-check status unavailable right now.'; });
+  })();
+</script>
+
+</body>
+</html>
