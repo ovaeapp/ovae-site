@@ -75,14 +75,16 @@
   // tampered price here changes nothing. Prices shown are a guide; Stripe
   // confirms the real amount.
   const GIFTS = [
-    { name: 'Fresh Flowers', price: 34 },
-    { name: 'A Warm Meal', price: 22 },
-    { name: 'Coffee Run', price: 9 },
-    { name: 'Bubble Tea Run', price: 9 },
-    { name: '72% Dark Chocolate Magnesium Bar', price: 6.5 },
-    { name: 'Ice Cream Duo (2 pints, cold-packed)', price: 15 },
-    { name: 'Ginger + Chamomile Cramp Tea (20 bags)', price: 11 },
+    { name: 'Fresh Flowers', price: 49 },
+    { name: 'A Warm Meal', price: 32 },
+    { name: 'Coffee Run', price: 14 },
+    { name: 'Bubble Tea Run', price: 14 },
+    { name: '72% Dark Chocolate Magnesium Bar', price: 8.99 },
+    { name: 'Ice Cream Duo (2 pints, cold-packed)', price: 24 },
+    { name: 'Ginger + Chamomile Cramp Tea (20 bags)', price: 11.49 },
     { name: 'Warming Relief Patches (12)', price: 14.99 },
+    { name: 'Deep-Sleep Herbal Tea (20 bags)', price: 10.49 },
+    { name: 'Cooling Pillow Spray', price: 12.49 },
   ];
   // Friendlier labels for a few catalog names; falls back to the name.
   const LABEL = {
@@ -90,6 +92,8 @@
     'Ice Cream Duo (2 pints, cold-packed)': 'Ice Cream',
     'Ginger + Chamomile Cramp Tea (20 bags)': 'Cramp Tea',
     'Warming Relief Patches (12)': 'Heat Patches',
+    'Deep-Sleep Herbal Tea (20 bags)': 'Sleep Tea',
+    'Cooling Pillow Spray': 'Pillow Spray',
   };
 
   let selected = null;
