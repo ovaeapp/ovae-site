@@ -169,13 +169,14 @@
     }).join('');
 
     const sendHtml = (d.sends || []).map((r) =>
-      queueCard('send', r.id, `Send to ${r.to}`, r.note ? `“${r.note}”` : '', `${esc(r.category || 'gift')} · ${when(r.createdAt)} · confirm address with her`)).join('');
+      queueCard('send', r.id, `Send to ${r.to}`, r.note ? `“${r.note}”` : '', `${r.category || 'gift'} · ${when(r.createdAt)} · ${r.address ? 'deliver to: ' + r.address : 'no saved address — reach her directly'}`)).join('');
     const coverHtml = (d.covers || []).map((r) =>
-      queueCard('cover', r.id, r.label, money(r.amountCents) + ' · covered', `${when(r.createdAt)} · confirm address with her`)).join('');
+      queueCard('cover', r.id, r.label, money(r.amountCents) + ' · covered', `${when(r.createdAt)} · ${r.address ? 'deliver to: ' + r.address : 'no saved address — reach her directly'}`)).join('');
     const giftHtml = (d.giftLinks || []).map((r) =>
-      queueCard('giftlink', r.id, r.label, `for ${r.to}`, `accepted ${when(r.claimedAt)} · confirm address with her`)).join('');
+      queueCard('giftlink', r.id, r.label, `for ${r.to}`,
+        `accepted ${when(r.claimedAt)} · ${r.address ? 'deliver to: ' + r.address : 'no address on file — reach her directly'}`)).join('');
     const creditHtml = (d.credits || []).map((r) =>
-      queueCard('credit', r.id, r.label, `for ${r.to}`, `redeemed ${when(r.redeemedAt)} · confirm address with her`)).join('');
+      queueCard('credit', r.id, r.label, `for ${r.to}`, `redeemed ${when(r.redeemedAt)} · ${r.address ? 'deliver to: ' + r.address : 'no saved address — reach her directly'}`)).join('');
 
     // Boxes are standing subscriptions, not one-shot tasks: no Mark-done —
     // each cycle is a confirm-timing-then-arrange conversation.
